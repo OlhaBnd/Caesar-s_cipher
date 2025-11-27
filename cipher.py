@@ -1,10 +1,11 @@
+import random
+
 class CaesarCipher:
     def __init__(self):
         self.ukrainian_alphabet = "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя"
         self.english_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
     def validate_key(self, key, language):
-        """Валідація ключа шифрування"""
         try:
             key = int(key)
             if language == "ukrainian":
@@ -19,15 +20,10 @@ class CaesarCipher:
             return False, "Ключ повинен бути цілим числом"
 
     def encrypt(self, text, key, language):
-        if language == "ukrainian":
-            alphabet = self.ukrainian_alphabet
-            alphabet_length = len(alphabet) // 2
-        else:
-            alphabet = self.english_alphabet
-            alphabet_length = len(alphabet) // 2
+        alphabet = self.ukrainian_alphabet if language == "ukrainian" else self.english_alphabet
+        alphabet_length = len(alphabet) // 2
 
         result = []
-
         for char in text:
             if char in alphabet:
                 if char.isupper():
@@ -40,19 +36,13 @@ class CaesarCipher:
                     result.append(alphabet[new_index])
             else:
                 result.append(char)
-
         return ''.join(result)
 
     def decrypt(self, text, key, language):
-        if language == "ukrainian":
-            alphabet = self.ukrainian_alphabet
-            alphabet_length = len(alphabet) // 2
-        else:
-            alphabet = self.english_alphabet
-            alphabet_length = len(alphabet) // 2
+        alphabet = self.ukrainian_alphabet if language == "ukrainian" else self.english_alphabet
+        alphabet_length = len(alphabet) // 2
 
         result = []
-
         for char in text:
             if char in alphabet:
                 if char.isupper():
@@ -65,7 +55,6 @@ class CaesarCipher:
                     result.append(alphabet[new_index])
             else:
                 result.append(char)
-
         return ''.join(result)
 
 
@@ -75,7 +64,6 @@ class TrithemiusCipher:
         self.english_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     def validate_key(self, key_type, key_values, language):
-        """Валідація ключів для лінійного, нелінійного або гасла"""
         if key_type in ["linear", "nonlinear"]:
             try:
                 key_numbers = [int(k) for k in key_values]
@@ -102,7 +90,7 @@ class TrithemiusCipher:
         n = len(alphabet)
         result = []
 
-        text = text.upper() if language == "ukrainian" else text.upper()
+        text = text.upper()
         key = key_values
 
         for i, ch in enumerate(text):
@@ -126,7 +114,7 @@ class TrithemiusCipher:
         n = len(alphabet)
         result = []
 
-        text = text.upper() if language == "ukrainian" else text.upper()
+        text = text.upper()
         key = key_values
 
         for i, ch in enumerate(text):
@@ -144,3 +132,55 @@ class TrithemiusCipher:
             else:
                 result.append(ch)
         return ''.join(result)
+
+
+class BookCipher:
+    """Віршований книжковий шифр"""
+    def __init__(self, columns=10):
+        self.columns = columns
+
+    def prepare_grid(self, key_text):
+        """Створення сітки з ключа"""
+        key_text = key_text.replace("\n", "")
+        grid = []
+        for i in range(0, len(key_text), self.columns):
+            row = list(key_text[i:i+self.columns])
+            grid.append(row)
+        return grid
+
+    def encrypt(self, text, key_text):
+        grid = self.prepare_grid(key_text)
+        result = []
+        for ch in text:
+            candidates = []
+            for r_idx, row in enumerate(grid):
+                for c_idx, c in enumerate(row):
+                    if c.lower() == ch.lower():  # ігноруємо регістр
+                        candidates.append((r_idx, c_idx))
+            if candidates:
+                r, c = random.choice(candidates)
+                result.append(f"{r:02}/{c:02}")
+            else:
+                # Якщо символу немає у ключі, залишаємо його без змін
+                result.append(ch)
+        return " ".join(result)
+
+    def decrypt(self, encrypted, key_text):
+        grid = self.prepare_grid(key_text)
+        result = []
+        for code in encrypted.split():
+            if "/" in code:
+                try:
+                    r, c = code.split("/")
+                    r_idx = int(r)
+                    c_idx = int(c)
+                    if r_idx < len(grid) and c_idx < len(grid[r_idx]):
+                        result.append(grid[r_idx][c_idx])
+                    else:
+                        result.append("?")
+                except:
+                    result.append("?")
+            else:
+                # якщо це не координата, залишаємо як є
+                result.append(code)
+        return "".join(result)
